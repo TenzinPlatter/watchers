@@ -1,11 +1,11 @@
-use std::{fs::{self, File}, io::Write};
+use std::{fs::{self, File}, io::Write, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    pub config_path: String,
-    pub watch_dir: String,
+    pub config_path: PathBuf,
+    pub watch_dir: PathBuf,
     #[serde(default)]
     pub verbose_logging: bool,
 }
