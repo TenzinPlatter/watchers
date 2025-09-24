@@ -1,10 +1,10 @@
-use std::{fs::{self, File}, io::Write, path::PathBuf};
+use std::{fs::{self, File}, io::{self, Write}, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    pub config_path: PathBuf,
+    pub config_path: Option<PathBuf>,
     pub watch_dir: PathBuf,
     #[serde(default)]
     pub verbose_logging: bool,
@@ -18,12 +18,9 @@ impl Config {
         Ok(user_config)
     }
 
-    pub fn dump_to(&self, file: &mut File) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn dump_to<T: Write>(&self, fd: &mut T) -> Result<(), Box<dyn std::error::Error>> {
         let s = serde_yaml::to_string(self)?;
-        if file.write(s.as_bytes())? != s.len() {
-            return Err("Failed to write entire config".into());
-        }
-
+        fd.write_all(s.as_bytes())?;
         Ok(())
     }
 }
