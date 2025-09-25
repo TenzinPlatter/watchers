@@ -1,13 +1,13 @@
-use std::{fs::{self, File}, io::{self, Write}, path::PathBuf};
+use std::{fs::{self}, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub config_path: Option<PathBuf>,
     pub watch_dir: PathBuf,
-    #[serde(default)]
-    pub verbose_logging: bool,
+    pub commit_delay_secs: u32,
+    pub auto_push: bool,
 }
 
 impl Config {
@@ -18,9 +18,7 @@ impl Config {
         Ok(user_config)
     }
 
-    pub fn dump_to<T: Write>(&self, fd: &mut T) -> Result<(), Box<dyn std::error::Error>> {
-        let s = serde_yaml::to_string(self)?;
-        fd.write_all(s.as_bytes())?;
-        Ok(())
+    pub fn dump(&self) -> serde_yaml::Result<String> {
+        serde_yaml::to_string(self)
     }
 }

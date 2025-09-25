@@ -1,2 +1,4 @@
 # config_path: "/home/tenzin/code/projects/watchers/config/config.yml"
 watch_dir:  "/home/tenzin/code/projects/watchers/test"
+commit_delay_secs: 3
+auto_push: true

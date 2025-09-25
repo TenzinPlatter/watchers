@@ -1,0 +1,3 @@
+- use autopush from config
+- submodules
+- fetch/autoupdate
