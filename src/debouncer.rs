@@ -45,25 +45,20 @@ where
 
         let handle = thread::spawn(move || {
             let (lock, cvar) = &*cancel_signal;
-            debug!("got cvar in thread");
             let mut cancelled = lock.lock().unwrap();
-            debug!("got bool lock in thread");
 
-            let result = cvar.wait_timeout(cancelled, Duration::from_secs(1)).unwrap();
+            let result = cvar.wait_timeout(cancelled, delay).unwrap();
             cancelled = result.0;
-            debug!("Cancelled: {}", cancelled);
 
             if (!*cancelled && result.1.timed_out())
                 && let (Ok(mut cb), Ok(mut context_guard)) =
                     (callback.lock(), pending_context.lock())
                 && let Some(context) = context_guard.take()
             {
-                debug!("running callback");
                 cb(context);
             }
         });
 
-        debug!("spawned timer thread");
         self.current_thread = Some(handle);
     }
 }
@@ -71,9 +66,7 @@ where
 impl<F> Debouncer<F> {
     fn cancel_current_thread(&mut self) {
         if self.current_thread.is_some() {
-            debug!("curr thread is some");
             let (lock, cvar) = &*self.cancel_signal;
-            debug!("got cvar");
             let mut cancelled = lock.lock().unwrap();
             *cancelled = true;
             cvar.notify_all();

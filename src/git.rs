@@ -1,5 +1,6 @@
-use git2::{Oid, Repository, Signature, Status, StatusEntry, StatusOptions, Statuses};
-use std::path::{Path, PathBuf};
+use git2::{BranchType, Cred, Oid, PushOptions, RemoteCallbacks, Repository, Signature, Status, StatusEntry, StatusOptions, Statuses};
+use log::{debug, error};
+use std::{env, path::{Path, PathBuf}};
 
 use crate::config::Config;
 
@@ -45,6 +46,15 @@ pub fn handle_event(context: EventContext) {
 
     let message = get_commit_message(&changed_files);
     create_commit(&repo, Some(&message)).unwrap();
+    debug!("creating commit");
+    if context.config.auto_push {
+        debug!("pushing commit");
+        match push_commits(&repo) {
+            Ok(_) => (),
+            Err(e) => println!("Failed to push with error: {}", e),
+        };
+        debug!("pushed commit");
+    }
 }
 
 pub fn create_commit(repo: &git2::Repository, message: Option<&str>) -> Result<Oid, git2::Error> {
@@ -129,4 +139,47 @@ fn get_commit_message(changed_files: &Statuses) -> String {
         .join("\n");
 
     [summary, desc].join("\n\n")
+}
+
+fn push_commits(repo: &Repository) -> Result<(), git2::Error> {
+    let head = repo.head()?;
+    let branch_name = head.shorthand().unwrap_or("main");
+    let branch = repo.find_branch(branch_name, BranchType::Local)?;
+    let (remote_name, remote_branch) = if let Ok(upstream) = branch.upstream() {
+        let upstream_name = upstream.name()?.unwrap_or("origin/main");
+        let parts: Vec<&str> = upstream_name.splitn(2, '/').collect();
+        (
+            parts[0].to_string(),
+            parts.get(1).unwrap_or(&branch_name).to_string(),
+        )
+    } else {
+        ("origin".to_string(), branch_name.to_string())
+    };
+
+    let refspec = format!("refs/heads/{}:refs/heads/{}", remote_branch, remote_branch);
+
+    let mut remote = repo.find_remote(&remote_name)?;
+    let mut push_options = PushOptions::new();
+    let mut callbacks = RemoteCallbacks::new();
+
+    callbacks.credentials(|_url, username_from_url, _allowed_types| {
+        Cred::ssh_key(
+            username_from_url.unwrap(),
+            None,
+            std::path::Path::new(&format!("{}/.ssh/id_ed25519", env::var("HOME").unwrap())),
+            None,
+        )
+    });
+    
+    callbacks.push_update_reference(|ref_name, status| {
+        if let Some(status) = status {
+            error!("Failed to push ref: {}. Status: {}", ref_name, status);
+        }
+        Ok(())
+    });
+
+    push_options.remote_callbacks(callbacks);
+
+    remote.push(&[&refspec], Some(&mut push_options))?;
+    Ok(())
 }

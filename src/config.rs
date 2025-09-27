@@ -8,6 +8,7 @@ pub struct Config {
     pub watch_dir: PathBuf,
     pub commit_delay_secs: u32,
     pub auto_push: bool,
+    pub remote: String,
 }
 
 impl Config {
