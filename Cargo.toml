@@ -2,6 +2,11 @@
 name = "watchers"
 version = "0.1.0"
 edition = "2024"
+description = "Git integrated file watcher"
+license = "Apache-2.0"
+repository = "https://github.com/TenzinPlatter/watchers"
+homepage = "https://github.com/TenzinPlatter/watchers"
+documentation = "https://docs.rs/watchers"
 
 [dependencies]
 env_logger = "0.11.8"
