@@ -52,8 +52,10 @@ pub mod debouncer;
 pub mod file_utils;
 pub mod git;
 
+pub use crate::config::Config;
+
 use crate::{
-    config::Config, debouncer::Debouncer, file_utils::was_modification, git::EventContext,
+    debouncer::Debouncer, file_utils::was_modification, git::EventContext,
 };
 use log::debug;
 use notify::{Event, RecursiveMode};
