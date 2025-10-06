@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/TenzinPlatter/watchers/compare/v1.2.0...v1.3.0) (2025-10-06)
+
+
+### Features
+
+* test ci ([7027851](https://github.com/TenzinPlatter/watchers/commit/702785117ead79294feb3aa79d4b7be37723c5e1))
+
 # [1.2.0](https://github.com/TenzinPlatter/watchers/compare/v1.1.0...v1.2.0) (2025-10-06)
 
 
