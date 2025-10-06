@@ -1,0 +1,12 @@
+Description=Watchers file monitoring service for {}
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/watchers
+WorkingDirectory={}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

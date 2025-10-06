@@ -47,17 +47,19 @@
 //! - **Thread-safe**: Uses condition variables for efficient timer management
 //! - **Git integration**: Full git2 integration for repository operations
 
+pub mod cli;
 pub mod config;
 pub mod debouncer;
 pub mod file_utils;
 pub mod git;
+pub mod systemd;
 
 pub use crate::config::Config;
 
 use crate::{
-    debouncer::Debouncer, file_utils::was_modification, git::EventContext,
+    debouncer::Debouncer, file_utils::was_modification, git::EventContext, systemd::SystemdContext,
 };
-use log::debug;
+use log::{debug, error};
 use notify::{Event, RecursiveMode};
 use std::{sync::mpsc, time::Duration};
 
@@ -122,7 +124,10 @@ where
     /// let watcher = Watcher::new(&config, handle_event);
     /// ```
     pub fn new(config: &'a Config, debouncer_cb: F) -> Self {
-        let debouncer = Debouncer::new(debouncer_cb, Duration::from_secs(config.commit_delay_secs as u64));
+        let debouncer = Debouncer::new(
+            debouncer_cb,
+            Duration::from_secs(config.commit_delay_secs as u64),
+        );
         Self { config, debouncer }
     }
 
@@ -149,7 +154,7 @@ where
 ///
 /// # Arguments
 ///
-/// * `watcher` - A mutable reference to a configured `Watcher` instance
+/// * `watcher` -A mutable reference to a configured `Watcher` instance
 ///
 /// # Returns
 ///
@@ -199,7 +204,7 @@ where
             Ok(ev) => {
                 if let Ok(ev) = ev
                     && was_modification(&ev)
-                        // TODO: && not_ignored(&ev)
+                // TODO: && not_ignored(&ev)
                 {
                     debug!("got modification: {:?}", ev);
                     watcher.trigger_debouncer();
@@ -207,4 +212,26 @@ where
             }
         }
     }
+}
+
+fn watcher_exists(_name: &str) -> bool {
+    todo!()
+}
+
+fn get_watcher_config(_name: &str) -> Config {
+    todo!()
+}
+
+pub async fn start_watcher(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    if !watcher_exists(name) {
+        anyhow::bail!(
+            "Watcher '{}' does not exist. Use 'watche rlist' to see available watchers.",
+            name
+        );
+    }
+
+    let config = get_watcher_config(name);
+    let ctx = SystemdContext::new(&config).await?;
+    ctx.start_service().await?;
+    Ok(())
 }

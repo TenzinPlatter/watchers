@@ -27,12 +27,15 @@ fn default_true() -> bool {
 ///
 /// # Fields
 ///
+/// * `name` - Unique name of watcher
 /// * `config_path` - Optional path to the configuration file itself
 /// * `watch_dir` - Directory to monitor for file changes
 /// * `commit_delay_secs` - Seconds to wait after last change before creating commit
 /// * `auto_push` - Whether to automatically push commits to remote (defaults to true)
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
+    /// Unique name of watcher
+    pub name: String,
     /// Optional path to the configuration file (used for self-reference)
     pub config_path: Option<PathBuf>,
     /// Directory to watch for file changes
