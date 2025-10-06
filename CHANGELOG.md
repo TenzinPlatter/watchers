@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/TenzinPlatter/watchers/compare/v1.0.0...v1.1.0) (2025-10-06)
+
+
+### Features
+
+* add cli and systemd functionality ([#4](https://github.com/TenzinPlatter/watchers/issues/4)) ([a866d10](https://github.com/TenzinPlatter/watchers/commit/a866d1065b97a7f00bdd44163070f84c5f1e89f4))
+
 # 1.0.0 (2025-09-27)
 
 
