@@ -1,45 +1,51 @@
-use clap::Parser;
-use log::debug;
+mod cli;
+mod config;
+mod debouncer;
+mod file_utils;
+mod git;
+mod systemd;
+mod watcher;
 
-use watchers::{
-    cli::{Cli, Commands}, config::Config, git::handle_event, start_watcher, watch_repo, Watcher
+use anyhow::Result;
+use clap::Parser;
+
+use crate::{
+    cli::{Cli, Commands},
+    watcher::{
+        create_watcher, delete_watcher, list_watchers, run_daemon, start_watcher, stop_watcher,
+    },
 };
 
-const CONFIG_PATH: &str = "./config/config.yml";
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<()> {
     env_logger::init();
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Start { name } => {
-            start_watcher(name);
+            start_watcher(name).await?;
         }
 
         Commands::Stop { name } => {
-            println!("Stopping {}", name);
+            stop_watcher(name).await?;
         }
 
-        Commands::Create { name, path } => {
-            println!("Creating {} at {}", name, path);
+        Commands::Create { name } => {
+            create_watcher(name).await?;
+        }
+
+        Commands::Delete { name } => {
+            delete_watcher(name)?;
         }
 
         Commands::List {} => {
-            println!("Listing");
+            list_watchers()?;
+        }
+
+        Commands::Daemon { name } => {
+            run_daemon(name).await?;
         }
     }
 
-    let config = Config::load(CONFIG_PATH)?;
-    debug!(
-        "Config:\n{}",
-        config.dump().unwrap_or("failed to read config".to_string())
-    );
-
-    let mut watcher = Watcher::new(&config, |context| {
-        handle_event(context);
-    });
-
-    watch_repo(&mut watcher)?;
-
-    panic!("Should never get out of watching loop");
+    Ok(())
 }

@@ -1,72 +1,86 @@
-use std::path::PathBuf;
+use std::{
+    fs,
+    path::PathBuf,
+};
 
+use anyhow::{Context, Result};
+use directories::ProjectDirs;
 use zbus::Connection;
 use zbus_systemd::systemd1::ManagerProxy;
 
-use crate::Config;
 
 pub struct SystemdContext<'a> {
     _conn: Connection,
     manager: ManagerProxy<'a>,
-    config: ServiceConfig,
 }
 
-struct ServiceConfig {
-    name: String,
-    unit_name: String,
-    watch_path: PathBuf,
+fn get_unit_name(name: &str) -> String {
+    format!("watchers@{name}.service")
 }
 
 impl<'a> SystemdContext<'a> {
-    pub async fn new(watcher_config: &Config) -> Result<Self, Box<dyn std::error::Error>> {
-        let conn = Connection::system().await?;
+    pub async fn new() -> Result<Self> {
+        let conn = Connection::session().await?;
         let manager = ManagerProxy::new(&conn).await?;
-
-        let config = ServiceConfig {
-            name: watcher_config.name.clone(),
-            unit_name: format!("watchers-{}.service", watcher_config.name),
-            watch_path: watcher_config.watch_dir.clone(),
-        };
 
         Ok(Self {
             _conn: conn,
             manager,
-            config,
         })
     }
 
-    fn generate_unit_file(&self) -> String {
-        format!(
-            include_str!("../assets/templates/watcher.service"),
-            self.config.name,
-            self.config.watch_path.display()
-        )
-    }
+    pub async fn stop_and_disable_service(&self, name: &str) -> Result<()> {
+        let unit_name = get_unit_name(name);
 
-    pub async fn stop_service(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.manager
-            .stop_unit(self.config.unit_name.clone(), "replace".to_string())
-            .await?;
+            .stop_unit(unit_name.clone(), "replace".to_string())
+            .await
+            .context("Failed to stop systemd service")?;
 
-        Ok(())
-    }
-
-    pub async fn create_service(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let unit_content = self.generate_unit_file();
-
-        std::fs::write(
-            format!("/etc/systemd/{}", self.config.unit_name),
-            unit_content,
-        )?;
-
-        Ok(())
-    }
-
-    pub async fn start_service(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.manager
-            .start_unit(self.config.unit_name.clone(), "replace".to_string())
-            .await?;
+            .disable_unit_files(vec![unit_name.clone()], false)
+            .await
+            .context("Failed to enable systemd service")?;
+
+        self.manager.reload().await?;
 
         Ok(())
     }
+
+    pub async fn start_and_enable_service(&self, name: &str) -> Result<()> {
+        let template_unit_path = get_systemd_unit_path();
+        if !template_unit_path.is_file() {
+            fs::write(template_unit_path, get_template_unit_contents())?;
+        }
+
+        let unit_name = get_unit_name(name);
+
+        self.manager
+            .start_unit(unit_name.clone(), "replace".to_string())
+            .await
+            .context("Failed to start systemd service")?;
+
+        self.manager
+            .enable_unit_files(vec![unit_name.clone()], false, true)
+            .await
+            .context("Failed to enable systemd service")?;
+
+        self.manager.reload().await?;
+
+        Ok(())
+    }
+}
+
+fn get_systemd_unit_path() -> PathBuf {
+    let proj_dir = ProjectDirs::from("", "", "").unwrap();
+    let config_dir = proj_dir.config_dir();
+
+    PathBuf::from(format!(
+        "{}/systemd/user/watchers@.service",
+        config_dir.display()
+    ))
+}
+
+fn get_template_unit_contents() -> &'static str {
+    include_str!("../assets/templates/watchers@.service")
 }

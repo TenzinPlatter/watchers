@@ -12,9 +12,14 @@ pub struct Cli {
 pub enum Commands {
     Start { name: String },
 
-    Create { name: String, path: String },
-
     Stop { name: String },
 
+    Create { name: String },
+
+    Delete { name: String },
+
     List {},
+
+    #[command(hide = true, name = "__daemon")]
+    Daemon { name: String }
 }
