@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/TenzinPlatter/watchers/compare/v1.1.0...v1.2.0) (2025-10-06)
+
+
+### Features
+
+* commit for release ([2720aa3](https://github.com/TenzinPlatter/watchers/commit/2720aa37070a17e99684b75799ced97c99aad084))
+
 # [1.1.0](https://github.com/TenzinPlatter/watchers/compare/v1.0.0...v1.1.0) (2025-10-06)
 
 
