@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/TenzinPlatter/watchers/compare/v1.3.0...v1.4.0) (2025-10-06)
+
+
+### Features
+
+* allow dirty in ci publish ([53fd065](https://github.com/TenzinPlatter/watchers/commit/53fd065d89c1515dc8d10ce85e0f76d5f7cc5726))
+
 # [1.3.0](https://github.com/TenzinPlatter/watchers/compare/v1.2.0...v1.3.0) (2025-10-06)
 
 
