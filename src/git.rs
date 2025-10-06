@@ -177,6 +177,7 @@ fn push_commits(repo: &Repository) -> Result<(), git2::Error> {
     let mut push_options = PushOptions::new();
     let mut callbacks = RemoteCallbacks::new();
 
+    // TODO: handle more auth methods
     callbacks.credentials(|_url, username_from_url, _allowed_types| {
         Cred::ssh_key(
             username_from_url.unwrap(),
