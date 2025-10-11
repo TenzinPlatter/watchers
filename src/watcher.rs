@@ -10,7 +10,7 @@ use anyhow::Result;
 use inquire::Text;
 use log::debug;
 use notify::{Event, RecursiveMode};
-use std::{fs, path::PathBuf, sync::mpsc, time::Duration};
+use std::{fs, path::Path, sync::mpsc, time::Duration};
 
 pub struct Watcher<'a, F> {
     pub config: &'a Config,
@@ -39,6 +39,18 @@ where
     }
 }
 
+fn is_git_ignored(paths: &[impl AsRef<Path>]) -> Result<bool> {
+    if paths.is_empty() {
+        return Ok(false);
+    }
+
+    let repo = git2::Repository::discover(&paths[0])?;
+
+    Ok(paths.iter().all(|p| {
+        repo.is_path_ignored(p).unwrap_or(false)
+    }))
+}
+
 pub fn watch_repo<F>(watcher: &mut Watcher<F>) -> Result<()>
 where
     F: FnMut(EventContext) + Send + 'static,
@@ -57,7 +69,7 @@ where
             Ok(ev) => {
                 if let Ok(ev) = ev
                     && was_modification(&ev)
-                // TODO: && not_ignored(&ev)
+                    && !is_git_ignored(&ev.paths)?
                 {
                     debug!("got modification: {:?}", ev);
                     watcher.trigger_debouncer();
