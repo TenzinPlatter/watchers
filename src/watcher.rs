@@ -6,11 +6,17 @@ use crate::{
     systemd::SystemdContext,
 };
 
-use anyhow::Result;
-use inquire::Text;
+use anyhow::{Context, Result};
+use git2::Repository;
+use inquire::{Confirm, Text};
 use log::debug;
 use notify::{Event, RecursiveMode};
-use std::{fs, path::Path, sync::mpsc, time::Duration};
+use std::{
+    fs::{self},
+    path::{Path, PathBuf},
+    sync::mpsc,
+    time::Duration,
+};
 
 pub struct Watcher<'a, F> {
     pub config: &'a Config,
@@ -30,7 +36,6 @@ where
     }
 
     pub fn trigger_debouncer(&mut self) {
-        debug!("triggering debouncer");
         let context = EventContext {
             repo_path: self.config.watch_dir.clone(),
             config: self.config.clone(),
@@ -39,16 +44,16 @@ where
     }
 }
 
-fn is_git_ignored(paths: &[impl AsRef<Path>]) -> Result<bool> {
+fn is_git_file(paths: &[impl AsRef<Path>]) -> Result<bool> {
     if paths.is_empty() {
         return Ok(false);
     }
 
-    let repo = git2::Repository::discover(&paths[0])?;
-
-    Ok(paths.iter().all(|p| {
-        repo.is_path_ignored(p).unwrap_or(false)
-    }))
+    // If any path contains .git as a component, it's a git internal file
+    // We should ignore these files regardless of git-ignore status
+    Ok(paths
+        .iter()
+        .any(|p| p.as_ref().components().any(|c| c.as_os_str() == ".git")))
 }
 
 pub fn watch_repo<F>(watcher: &mut Watcher<F>) -> Result<()>
@@ -69,9 +74,10 @@ where
             Ok(ev) => {
                 if let Ok(ev) = ev
                     && was_modification(&ev)
+                    && !is_git_file(&ev.paths)?
                     && !is_git_ignored(&ev.paths)?
                 {
-                    debug!("got modification: {:?}", ev);
+                    debug!("got valid modification: {:?} - triggering debouncer", ev);
                     watcher.trigger_debouncer();
                 }
             }
@@ -79,8 +85,24 @@ where
     }
 }
 
+fn is_git_ignored<P: AsRef<Path>>(paths: &[P]) -> Result<bool> {
+    if paths.is_empty() {
+        return Ok(false);
+    }
+
+    let repo = Repository::discover(paths[0].as_ref().parent().unwrap())?;
+    for p in paths {
+        let rel_path = p.as_ref().strip_prefix(repo.workdir().unwrap())?;
+        if repo.is_path_ignored(rel_path)? {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
 fn get_watcher_config(name: &str) -> Result<Config> {
-    let path = Config::get_watcher_config_path(name)?;
+    let path = Config::get_watcher_config_path(name);
     anyhow::ensure!(path.is_file(), "Could not find config for '{}'", name);
     Config::from_file(path)
 }
@@ -93,7 +115,9 @@ pub async fn start_watcher(name: &str) -> Result<()> {
 }
 
 pub async fn create_watcher(name: &str) -> Result<()> {
-    let path_input = Text::new("Path to directory to watch:").prompt()?;
+    let path_input = Text::new("Path to directory to watch:")
+        .prompt()
+        .context("Failed to read input")?;
     let path = PathBuf::from(shellexpand::tilde(&path_input).to_string());
 
     anyhow::ensure!(
@@ -102,8 +126,39 @@ pub async fn create_watcher(name: &str) -> Result<()> {
         path.display()
     );
 
-    let config = Config::new(name, path);
-    fs::write(Config::get_watcher_config_path(name)?, config.dump()?)?;
+    let config = Config::new(name, &path);
+    let config_path = Config::get_watcher_config_path(name);
+
+    let mut should_overwrite_config: bool = true;
+    if config_path.exists() {
+        anyhow::ensure!(
+            config_path.is_file(),
+            format!(
+                "'{}' is not a regular file.",
+                config_path.as_os_str().display()
+            )
+        );
+
+        should_overwrite_config = Confirm::new(&format!(
+            "'{}' already exists, do you want to overwrite it?",
+            config_path.as_os_str().display()
+        ))
+        .with_default(false)
+        .prompt()?;
+    }
+
+    if !should_overwrite_config {
+        return Ok(());
+    }
+
+    if let Some(parent) = &config_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+
+    fs::write(&config_path, config.dump()?).context(format!(
+        "Failed to write config to: {}",
+        &config_path.as_os_str().display()
+    ))?;
 
     let systemd_ctx = SystemdContext::new().await?;
     systemd_ctx.start_and_enable_service(name).await?;
@@ -119,7 +174,7 @@ pub async fn stop_watcher(name: &str) -> Result<()> {
 }
 
 pub fn delete_watcher(name: &str) -> Result<()> {
-    let config_path = Config::get_watcher_config_path(name)?;
+    let config_path = Config::get_watcher_config_path(name);
     anyhow::ensure!(config_path.is_file(), "Couldn't find watcher '{}'", name);
     fs::remove_file(config_path)?;
     Ok(())
