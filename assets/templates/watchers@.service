@@ -1,9 +1,10 @@
+[Unit]
 Description=Watchers file monitoring service for %i
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/watchers __daemon %i
+ExecStart={} __daemon %i
 Restart=always
 RestartSec=5
 

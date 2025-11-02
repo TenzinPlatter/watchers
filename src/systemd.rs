@@ -1,13 +1,9 @@
-use std::{
-    fs,
-    path::PathBuf,
-};
+use std::{env, fs, path::PathBuf};
 
 use anyhow::{Context, Result};
 use directories::ProjectDirs;
 use zbus::Connection;
 use zbus_systemd::systemd1::ManagerProxy;
-
 
 pub struct SystemdContext<'a> {
     _conn: Connection,
@@ -81,6 +77,11 @@ fn get_systemd_unit_path() -> PathBuf {
     ))
 }
 
-fn get_template_unit_contents() -> &'static str {
-    include_str!("../assets/templates/watchers@.service")
+fn get_template_unit_contents() -> String {
+    let default_exe_path = "/usr/bin/local/watchers";
+    let exe_path = env::current_exe().unwrap_or_else(|_| default_exe_path.into());
+    format!(
+        include_str!("../assets/templates/watchers@.service"),
+        exe_path.as_os_str().to_str().unwrap_or(default_exe_path)
+    )
 }
