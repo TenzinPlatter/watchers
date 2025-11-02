@@ -8,6 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Build the project
 cargo build
 
+# Build release binary
+cargo build --release
+
 # Run the CLI
 cargo run -- <command>
 
@@ -16,6 +19,12 @@ RUST_LOG=debug cargo run -- <command>
 
 # Check compilation without building
 cargo check
+
+# Run tests
+cargo test
+
+# Run specific test
+cargo test <test_name>
 
 # Format code
 cargo fmt
@@ -143,3 +152,16 @@ This is a CLI-based file system watcher that automatically creates git commits w
 - No file ignore patterns implemented yet (TODO in code)
 - SSH key path is hardcoded
 - No tests written yet
+
+## Release Process
+
+This project uses semantic-release for automated versioning and releases:
+
+- Releases are triggered manually via GitHub Actions workflow dispatch
+- semantic-release analyzes commit messages (conventional commits) to determine version bump
+- Version is bumped in `Cargo.toml` and `Cargo.lock` via `@semantic-release/exec` plugin
+- `CHANGELOG.md`, `Cargo.toml`, and `Cargo.lock` are committed with `[skip ci]` message
+- Release binary is built and attached to GitHub release
+- Package is published to crates.io with `--allow-dirty` flag
+
+Configuration is in `.releaserc.json`
