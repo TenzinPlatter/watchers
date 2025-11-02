@@ -32,10 +32,8 @@ where
 
     pub fn on_event(&mut self, context: EventContext) {
         *self.pending_context.lock().unwrap() = Some(context);
-        debug!("got context lock");
-
         self.cancel_current_thread();
-        debug!("cancelled thread");
+        debug!("cancelled old thread");
 
         let callback = Arc::clone(&self.callback);
         let pending_context = Arc::clone(&self.pending_context);

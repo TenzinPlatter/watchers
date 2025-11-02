@@ -42,15 +42,9 @@ impl Config {
         }
     }
 
-    pub fn get_watcher_config_path(name: &str) -> Result<PathBuf> {
+    pub fn get_watcher_config_path(name: &str) -> PathBuf {
         let config_dir = get_watchers_config_dir();
-        let yaml_ext = config_dir.join(format!("{}.yaml", name));
-        if yaml_ext.is_file() {
-            return Ok(yaml_ext);
-        }
-
-        let yml_ext = config_dir.join(format!("{}.yml", name));
-        Ok(yml_ext)
+        config_dir.join(format!("{}.yml", name))
     }
 
     pub fn from_file<P: AsRef<Path>>(config_path: P) -> Result<Config> {
