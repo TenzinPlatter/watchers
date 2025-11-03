@@ -1,3 +1,17 @@
+# [1.5.0](https://github.com/TenzinPlatter/watchers/compare/v1.4.0...v1.5.0) (2025-11-03)
+
+
+### Bug Fixes
+
+* use dynamic executable path in systemd service template ([18a05d1](https://github.com/TenzinPlatter/watchers/commit/18a05d1c79b813cd6b827e2ba67a8310873bc841))
+
+
+### Features
+
+* add submodule commit and push support ([4c34d2f](https://github.com/TenzinPlatter/watchers/commit/4c34d2f140cc7c3eb672aba43757cdff9f96673b))
+* check if file was git ignored when triggering watcher ([17bfef8](https://github.com/TenzinPlatter/watchers/commit/17bfef8d1c7be371c7618b03ef1b18ded6b96f16))
+* filter out git internal files and improve git-ignore checking ([7830797](https://github.com/TenzinPlatter/watchers/commit/78307978f6338bd35a7b3ed2ff14f96eebb64f16))
+
 # [1.4.0](https://github.com/TenzinPlatter/watchers/compare/v1.3.0...v1.4.0) (2025-10-06)
 
 
