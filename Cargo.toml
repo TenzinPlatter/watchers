@@ -1,6 +1,6 @@
 [package]
 name = "watchers"
-version = "1.5.0"
+version = "1.6.0"
 edition = "2024"
 description = "Git integrated file watcher"
 license = "Apache-2.0"

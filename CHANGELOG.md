@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/TenzinPlatter/watchers/compare/v1.5.0...v1.6.0) (2025-11-09)
+
+
+### Features
+
+* add commit on startup ([ee81793](https://github.com/TenzinPlatter/watchers/commit/ee81793a17337f3934fb461b7e78594ea569756c))
+
 # [1.5.0](https://github.com/TenzinPlatter/watchers/compare/v1.4.0...v1.5.0) (2025-11-03)
 
 
