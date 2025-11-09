@@ -68,6 +68,12 @@ where
         RecursiveMode::Recursive,
     )?;
 
+    // run callback initially to commit any preexisting changes
+    watcher.debouncer.run_callback(EventContext {
+        repo_path: watcher.config.watch_dir.clone(),
+        config: watcher.config.clone(),
+    });
+
     loop {
         match rx.recv() {
             Err(e) => println!("watch error: {:?}", e),

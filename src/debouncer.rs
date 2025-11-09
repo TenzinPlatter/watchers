@@ -30,6 +30,14 @@ where
         }
     }
 
+    pub fn run_callback(&mut self, context: EventContext) {
+        self.cancel_current_thread();
+
+        // scope cb def to drop lock before mutable self borrow below
+        let mut cb = self.callback.lock().unwrap();
+        cb(context.clone());
+    }
+
     pub fn on_event(&mut self, context: EventContext) {
         *self.pending_context.lock().unwrap() = Some(context);
         self.cancel_current_thread();

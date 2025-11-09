@@ -52,7 +52,9 @@ pub fn handle_event(context: EventContext) {
             return;
         }
     };
+
     if changed_files.is_empty() {
+        debug!("No changed files");
         return;
     }
 
