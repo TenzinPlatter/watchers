@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/TenzinPlatter/watchers/compare/v1.6.0...v1.6.1) (2025-11-10)
+
+
+### Bug Fixes
+
+* add version command ([48ae89e](https://github.com/TenzinPlatter/watchers/commit/48ae89eb42e0cfcbc6d5f59a42b46117bba28e61))
+
 # [1.6.0](https://github.com/TenzinPlatter/watchers/compare/v1.5.0...v1.6.0) (2025-11-09)
 
 
