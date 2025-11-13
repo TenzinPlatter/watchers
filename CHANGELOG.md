@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/TenzinPlatter/watchers/compare/v1.6.1...v1.7.0) (2025-11-13)
+
+
+### Features
+
+* add logs command ([dcd9072](https://github.com/TenzinPlatter/watchers/commit/dcd90722487e06bf07b842d2f74167b66141cf41))
+
 ## [1.6.1](https://github.com/TenzinPlatter/watchers/compare/v1.6.0...v1.6.1) (2025-11-10)
 
 
