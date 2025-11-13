@@ -102,9 +102,21 @@ pub fn create_commit(
 
         // Handle regular files
         if !submodule_paths.contains(path) {
+            let status = entry.status();
+
+            // Use remove_path for deleted files, add_path for everything else
+            if status.contains(Status::WT_DELETED) {
+                if let Err(e) = index.remove_path(path) {
+                    error!("Failed to remove {}: {}", path_str, e);
+                }
+
+                continue;
+            }
+
             if let Err(e) = index.add_path(path) {
                 error!("Failed to add {}: {}", path_str, e);
             }
+
             continue;
         }
 
@@ -298,7 +310,10 @@ fn commit_submodule_changes(repo: &Repository, context: &EventContext) -> Result
         // Create commit with message
         let message = get_commit_message(&changed_files);
         if let Err(e) = create_commit(&sub_repo, &changed_files, Some(&message)) {
-            error!("Failed to commit submodule changes at {:?}: {}", submodule_path, e);
+            error!(
+                "Failed to commit submodule changes at {:?}: {}",
+                submodule_path, e
+            );
             continue;
         }
 
