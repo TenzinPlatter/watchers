@@ -3,7 +3,7 @@ use std::{env, fs, path::PathBuf};
 use anyhow::{Context, Result};
 use directories::ProjectDirs;
 use zbus::Connection;
-use zbus_systemd::systemd1::ManagerProxy;
+use zbus_systemd::systemd1::{ManagerProxy};
 
 pub struct SystemdContext<'a> {
     _conn: Connection,

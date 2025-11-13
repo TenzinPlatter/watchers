@@ -179,7 +179,9 @@ pub async fn stop_watcher(name: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn delete_watcher(name: &str) -> Result<()> {
+pub async fn delete_watcher(name: &str) -> Result<()> {
+    stop_watcher(name).await?;
+
     let config_path = Config::get_watcher_config_path(name);
     anyhow::ensure!(config_path.is_file(), "Couldn't find watcher '{}'", name);
     fs::remove_file(config_path)?;

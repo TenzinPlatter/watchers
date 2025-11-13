@@ -24,18 +24,25 @@ async fn main() -> Result<()> {
     match &cli.command {
         Commands::Start { name } => {
             start_watcher(name).await?;
+            println!("Successfully started watcher '{}'", name);
         }
 
         Commands::Stop { name } => {
             stop_watcher(name).await?;
+            println!("Successfully stopped watcher '{}'", name);
         }
 
         Commands::Create { name } => {
             create_watcher(name).await?;
+            println!(
+                "Successfully created watcher '{}', start it with: 'watchers start {}",
+                name, name
+            );
         }
 
         Commands::Delete { name } => {
-            delete_watcher(name)?;
+            delete_watcher(name).await?;
+            println!("Successfully deleted watcher '{}'", name);
         }
 
         Commands::List {} => {
