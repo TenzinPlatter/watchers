@@ -18,6 +18,8 @@ pub enum Commands {
 
     Delete { name: String },
 
+    Logs { name: String },
+
     List {},
 
     #[command(hide = true, name = "__daemon")]

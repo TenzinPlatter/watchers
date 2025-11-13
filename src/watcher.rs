@@ -188,6 +188,12 @@ pub async fn delete_watcher(name: &str) -> Result<()> {
     Ok(())
 }
 
+pub async fn get_watcher_logs(name: &str) -> Result<String> {
+    let systemd_ctx = SystemdContext::new().await?;
+    let logs = systemd_ctx.get_service_logs(name).await?;
+    Ok(logs)
+}
+
 pub fn list_watchers() -> Result<()> {
     println!("Watchers:");
     let config_dir = get_watchers_config_dir();

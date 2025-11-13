@@ -12,7 +12,7 @@ use clap::Parser;
 use crate::{
     cli::{Cli, Commands},
     watcher::{
-        create_watcher, delete_watcher, list_watchers, run_daemon, start_watcher, stop_watcher,
+        create_watcher, delete_watcher, get_watcher_logs, list_watchers, run_daemon, start_watcher, stop_watcher
     },
 };
 
@@ -47,6 +47,10 @@ async fn main() -> Result<()> {
 
         Commands::List {} => {
             list_watchers()?;
+        }
+
+        Commands::Logs { name } => {
+            println!("{}", get_watcher_logs(name).await?);
         }
 
         Commands::Daemon { name } => {

@@ -2,8 +2,9 @@ use std::{env, fs, path::PathBuf};
 
 use anyhow::{Context, Result};
 use directories::ProjectDirs;
+use tokio::process::Command;
 use zbus::Connection;
-use zbus_systemd::systemd1::{ManagerProxy};
+use zbus_systemd::systemd1::ManagerProxy;
 
 pub struct SystemdContext<'a> {
     _conn: Connection,
@@ -64,6 +65,26 @@ impl<'a> SystemdContext<'a> {
         self.manager.reload().await?;
 
         Ok(())
+    }
+
+    pub async fn get_service_logs(&self, name: &str) -> Result<String> {
+        let unit_name = format!("watchers@{}.service", name);
+        let output = Command::new("journalctl")
+            .arg("--user")
+            .arg("-u")
+            .arg(unit_name)
+            .output()
+            .await
+            .context("Failed to run journalctl")?;
+
+        if !output.status.success() {
+            return Err(anyhow::anyhow!(
+                "journalctl exited with code: {}",
+                output.status
+            ));
+        }
+
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
     }
 }
 
