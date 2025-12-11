@@ -1,3 +1,11 @@
+## [1.7.1](https://github.com/TenzinPlatter/watchers/compare/v1.7.0...v1.7.1) (2025-12-11)
+
+
+### Bug Fixes
+
+* add proper handling for deleted files ([99356fc](https://github.com/TenzinPlatter/watchers/commit/99356fcbeb30c59eaedbbfff8df06320cd33bf72))
+* correct WantedBy in unit file ([42d06d7](https://github.com/TenzinPlatter/watchers/commit/42d06d7c4caed1191909372c401e597ce5d047e9))
+
 # [1.7.0](https://github.com/TenzinPlatter/watchers/compare/v1.6.1...v1.7.0) (2025-11-13)
 
 
