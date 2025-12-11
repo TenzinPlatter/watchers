@@ -1,4 +1,8 @@
-use std::{env, fs, path::PathBuf};
+use std::{
+    env,
+    fs::{self, read},
+    path::PathBuf,
+};
 
 use anyhow::{Context, Result};
 use directories::ProjectDirs;
@@ -46,8 +50,10 @@ impl<'a> SystemdContext<'a> {
 
     pub async fn start_and_enable_service(&self, name: &str) -> Result<()> {
         let template_unit_path = get_systemd_unit_path();
-        if !template_unit_path.is_file() {
-            fs::write(template_unit_path, get_template_unit_contents())?;
+        if !&template_unit_path.is_file()
+            || read(&template_unit_path)? != get_template_unit_contents().as_bytes()
+        {
+            fs::write(&template_unit_path, get_template_unit_contents())?;
         }
 
         let unit_name = get_unit_name(name);
