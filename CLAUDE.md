@@ -53,6 +53,9 @@ watchers delete <name>
 # List all configured watchers
 watchers list
 
+# View logs for a watcher
+watchers logs <name>
+
 # Run daemon directly (hidden command, used by systemd)
 watchers __daemon <name>
 ```
@@ -82,6 +85,7 @@ This is a CLI-based file system watcher that automatically creates git commits w
 - Main orchestrator that sets up file system watching using `notify` crate
 - Contains a `Debouncer` instance that delays commit creation until file activity stops
 - Provides CRUD operations for watcher management (create, start, stop, delete, list)
+- Filters out `.git` internal files and respects `.gitignore` patterns via `is_git_ignored()`
 - `run_daemon()` is the entry point for the background daemon process
 
 **Debouncer (`src/debouncer.rs`)**
@@ -95,7 +99,8 @@ This is a CLI-based file system watcher that automatically creates git commits w
 - `EventContext`: Helper struct that carries `repo_path` and `config` to callbacks
 - `handle_event()`: Called by debouncer after quiet period, creates commits and optionally pushes
 - `get_commit_message()`: Generates structured commit messages showing deleted/modified/added files
-- `push_commits()`: Handles push to remote using SSH keys (hardcoded to `~/.ssh/id_ed25519`)
+- `push_commits()`: Handles push to remote using SSH keys (`~/.ssh/id_ed25519`) or credential helpers for HTTPS
+- `commit_submodule_changes()`: Recursively commits and pushes changes in git submodules
 - Repository is opened fresh in each callback to avoid thread safety issues with `git2::Repository`
 
 **Systemd Integration (`src/systemd.rs`)**
@@ -103,6 +108,7 @@ This is a CLI-based file system watcher that automatically creates git commits w
 - Manages systemd user services via `ManagerProxy`
 - Template unit file (`watchers@.service`) allows multiple named instances
 - Unit file is installed to `~/.config/systemd/user/` on first use
+- `get_service_logs()`: Retrieves systemd journal logs via `journalctl --user`
 
 **File Utilities (`src/file_utils.rs`)**
 - `was_modification()`: Filters file system events to only modification types (Create, Modify, Remove)
@@ -126,31 +132,32 @@ This is a CLI-based file system watcher that automatically creates git commits w
 
 3. On file changes:
    - `notify` detects events and filters via `was_modification()`
+   - Filters out `.git` internal files and git-ignored files
    - Each modification triggers `Debouncer::on_event()` with `EventContext`
    - Debouncer resets timer on each new event
    - After quiet period (no events for `commit_delay_secs`), calls `handle_event()`
 
 4. In `handle_event()`:
    - Opens repository (or creates if doesn't exist)
+   - Recursively commits changes in submodules first via `commit_submodule_changes()`
    - Gets changed files via `git2` status
    - Generates commit message listing all changes
-   - Creates commit with all changes staged
-   - If `auto_push` is enabled, pushes to remote using SSH key
+   - Creates commit with all changes staged (including submodule pointer updates)
+   - If `auto_push` is enabled, pushes to remote using SSH key or credential helper
 
 ### Key Design Decisions
 
 - **Multiple named watchers**: Each watcher is a separate systemd service instance using template units (`watchers@.service`)
 - **Thread-safe debouncing**: Uses condition variables for efficient timer cancellation across threads
 - **Repository handling**: Opens repository fresh in callbacks to avoid thread safety issues
-- **Event filtering**: File modification check happens before debouncer, not in git handler
+- **Event filtering**: File modification check, `.git` filtering, and gitignore filtering happen before debouncer
 - **Systemd integration**: Uses D-Bus instead of shelling out to `systemctl`
-- **SSH authentication**: Hardcoded to `~/.ssh/id_ed25519` for git push operations
+- **Authentication**: Supports SSH keys (`~/.ssh/id_ed25519`) and git credential helpers for HTTPS
+- **Submodule support**: Recursively commits and pushes changes in git submodules
 
 ### Known Limitations
 
-- No support for submodules yet (TODO in code)
-- No file ignore patterns implemented yet (TODO in code)
-- SSH key path is hardcoded
+- SSH key path is hardcoded to `~/.ssh/id_ed25519` (though HTTPS with credential helpers is also supported)
 - No tests written yet
 
 ## Release Process
