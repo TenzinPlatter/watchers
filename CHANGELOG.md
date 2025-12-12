@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/TenzinPlatter/watchers/compare/v1.7.1...v1.8.0) (2025-12-12)
+
+
+### Features
+
+* automatically keep systemd template up to date ([147c36d](https://github.com/TenzinPlatter/watchers/commit/147c36df41cb6e114e1d319e5787a6e49337a602))
+
 ## [1.7.1](https://github.com/TenzinPlatter/watchers/compare/v1.7.0...v1.7.1) (2025-12-11)
 
 
