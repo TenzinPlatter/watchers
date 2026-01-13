@@ -69,11 +69,6 @@ where
     )?;
 
     // run callback initially to commit any preexisting changes
-    watcher.debouncer.run_callback(EventContext {
-        repo_path: watcher.config.watch_dir.clone(),
-        config: watcher.config.clone(),
-    });
-
     loop {
         match rx.recv() {
             Err(e) => println!("watch error: {:?}", e),
@@ -89,6 +84,16 @@ where
             }
         }
     }
+}
+
+pub fn trigger_watcher<F>(watcher: &mut Watcher<F>)
+where
+    F: FnMut(EventContext) + Send + 'static,
+{
+    watcher.debouncer.run_callback(EventContext {
+        repo_path: watcher.config.watch_dir.clone(),
+        config: watcher.config.clone(),
+    });
 }
 
 fn is_git_ignored<P: AsRef<Path>>(paths: &[P]) -> Result<bool> {
@@ -107,7 +112,7 @@ fn is_git_ignored<P: AsRef<Path>>(paths: &[P]) -> Result<bool> {
     Ok(false)
 }
 
-fn get_watcher_config(name: &str) -> Result<Config> {
+pub fn get_watcher_config(name: &str) -> Result<Config> {
     let path = Config::get_watcher_config_path(name);
     anyhow::ensure!(path.is_file(), "Could not find config for '{}'", name);
     Config::from_file(path)

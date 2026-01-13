@@ -22,6 +22,8 @@ pub enum Commands {
 
     List {},
 
+    Trigger {name: String },
+
     #[command(hide = true, name = "__daemon")]
     Daemon { name: String }
 }

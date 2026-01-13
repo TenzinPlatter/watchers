@@ -11,8 +11,10 @@ use clap::Parser;
 
 use crate::{
     cli::{Cli, Commands},
+    git::handle_event,
     watcher::{
-        create_watcher, delete_watcher, get_watcher_logs, list_watchers, run_daemon, start_watcher, stop_watcher
+        Watcher, create_watcher, delete_watcher, get_watcher_config, get_watcher_logs,
+        list_watchers, run_daemon, start_watcher, stop_watcher, trigger_watcher,
     },
 };
 
@@ -51,6 +53,15 @@ async fn main() -> Result<()> {
 
         Commands::Logs { name } => {
             println!("{}", get_watcher_logs(name).await?);
+        }
+
+        Commands::Trigger { name } => {
+            let config = get_watcher_config(name)?;
+            let mut watcher = Watcher::new(&config, |context| {
+                handle_event(context);
+            });
+            trigger_watcher(&mut watcher);
+            println!("Successfully triggered watcher '{}'", name);
         }
 
         Commands::Daemon { name } => {
