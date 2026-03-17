@@ -2,12 +2,11 @@ use crate::{
     config::{Config, get_watchers_config_dir},
     debouncer::Debouncer,
     file_utils::was_modification,
-    git::{EventContext, handle_event},
+    git::{EventContext, handle_event, is_git_ignored},
     systemd::SystemdContext,
 };
 
 use anyhow::{Context, Result};
-use git2::Repository;
 use inquire::{Confirm, Text};
 use log::debug;
 use notify::{Event, RecursiveMode};
@@ -96,21 +95,6 @@ where
     });
 }
 
-fn is_git_ignored<P: AsRef<Path>>(paths: &[P]) -> Result<bool> {
-    if paths.is_empty() {
-        return Ok(false);
-    }
-
-    let repo = Repository::discover(paths[0].as_ref().parent().unwrap())?;
-    for p in paths {
-        let rel_path = p.as_ref().strip_prefix(repo.workdir().unwrap())?;
-        if repo.is_path_ignored(rel_path)? {
-            return Ok(true);
-        }
-    }
-
-    Ok(false)
-}
 
 pub fn get_watcher_config(name: &str) -> Result<Config> {
     let path = Config::get_watcher_config_path(name);
